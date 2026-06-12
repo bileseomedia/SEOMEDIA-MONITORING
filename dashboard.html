@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgencyOS - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f3f4f6; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .transition-all-300 { transition: all 0.3s ease; }
+    </style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader" class="fixed inset-0 bg-gray-900/90 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 text-center">
+        <div class="animate-spin h-10 w-10 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-3"></div>
+        <p class="text-gray-700">Memuat data...</p>
+    </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-5 py-3 rounded-xl shadow-2xl z-50 hidden">
+    <i class="fa-solid fa-circle-check text-green-400 mr-2"></i>
+    <span id="toastMessage"></span>
+</div>
+
+<div id="appContainer" class="flex h-screen">
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="bg-gray-900 text-white w-64 flex flex-col fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-all-300 z-30">
+        <div class="p-5 border-b border-gray-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="font-bold text-xl">AgencyOS</h1>
+                    <p class="text-xs text-gray-400" id="roleBadge"></p>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+            <div id="navMenuEksekutor" class="hidden">
+                <button onclick="switchTab('dashboard')" class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition mb-1">
+                    <i class="fa-solid fa-chart-line w-5 mr-2"></i> Dashboard
+                </button>
+                <button onclick="switchTab('tasks')" class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition mb-1">
+                    <i class="fa-solid fa-tasks w-5 mr-2"></i> Task Board
+                </button>
+                <button onclick="switchTab('myReports')" class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition mb-1">
+                    <i class="fa-solid fa-chart-simple w-5 mr-2"></i> Laporan Saya
+                </button>
+            </div>
+            <div id="navMenuMaker" class="hidden">
+                <button onclick="switchTab('makerDashboard')" class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition mb-1">
+                    <i class="fa-solid fa-chart-line w-5 mr-2"></i> Dashboard
+                </button>
+                <button onclick="switchTab('manageProjects')" class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition mb-1">
+                    <i class="fa-solid fa-folder w-5 mr-2"></i> Kelola Project
+                </button>
+                <button onclick="switchTab('manageTasks')" class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition mb-1">
+                    <i class="fa-solid fa-list-check w-5 mr-2"></i> Kelola Task
+                </button>
+                <button onclick="switchTab('financialReport')" class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition mb-1">
+                    <i class="fa-solid fa-chart-pie w-5 mr-2"></i> Laporan Keuangan
+                </button>
+                <button onclick="switchTab('operasional')" class="nav-btn w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-800 transition mb-1">
+                    <i class="fa-solid fa-receipt w-5 mr-2"></i> Biaya Operasional
+                </button>
+            </div>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <div class="flex items-center justify-between">
+                <div class="text-xs text-gray-400">
+                    <i class="fa-regular fa-user mr-1"></i>
+                    <span id="userNameDisplay"></span>
+                </div>
+                <button onclick="logout()" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h2 id="pageTitle" class="text-xl font-bold text-gray-800">Dashboard</h2>
+            </div>
+            <div class="bg-indigo-100 w-10 h-10 rounded-full flex items-center justify-center">
+                <i class="fa-regular fa-bell text-indigo-600"></i>
+            </div>
+        </header>
+        <div id="contentContainer" class="flex-1 overflow-auto p-6">
+            <!-- Konten akan diisi JavaScript -->
+        </div>
+    </main>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
